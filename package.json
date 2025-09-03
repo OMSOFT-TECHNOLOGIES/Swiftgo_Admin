@@ -1,5 +1,5 @@
 {
-      "name": "SwitGo",
+      "name": "switgo-admin",
       "version": "0.1.0",
       "private": true,
       "dependencies": {
@@ -52,14 +52,18 @@
       },
       "devDependencies": {
             "@types/node": "^20.10.0",
+            "@types/react": "^18.3.3",
+            "@types/react-dom": "^18.3.0",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "autoprefixer": "^10.4.21",
             "postcss": "^8.5.6",
             "tailwindcss": "^3.4.17",
+            "typescript": "^5.5.3",
             "vite": "6.3.5"
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "vite build",
+            "preview": "vite preview"
       }
 }
