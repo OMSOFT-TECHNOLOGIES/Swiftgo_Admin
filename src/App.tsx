@@ -5,9 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
 import { Toaster } from "./components/ui/sonner";
+import { useAuth } from './hooks/useAuth';
 // Fallback logo using data URI - replace with your actual logo
 const globeSwiftGoLogo = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzMxNzhGRiIvPgo8cGF0aCBkPSJNMTIgMTZIMjhWMjRIMTJWMTZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTYgMTJIMjBWMjhIMTZWMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
 import { Login } from "./components/Login";
+import { Homepage } from "./components/Homepage";
 import { Dashboard } from "./components/Dashboard";
 import { Orders } from "./components/Orders";
 import { Riders } from "./components/Riders";
@@ -36,7 +38,6 @@ import {
   Shield,
   HelpCircle,
   Activity,
-  ToggleLeft,
   Sun,
   Moon
 } from 'lucide-react';
@@ -78,9 +79,9 @@ const menuSections = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ email: string; name: string } | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showLogin, setShowLogin] = useState(false); // New state for showing login
+  const { isAuthenticated, admin, logout } = useAuth();
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -94,17 +95,6 @@ export default function App() {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  // Check for existing authentication on app load
-  useEffect(() => {
-    const savedAuth = localStorage.getItem('auth');
-    const savedUser = localStorage.getItem('user');
-    
-    if (savedAuth === 'true' && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
     }
   }, []);
 
@@ -122,33 +112,9 @@ export default function App() {
     }
   };
 
-  // Handle login
-  const handleLogin = (credentials: { email: string; password: string; rememberMe: boolean }) => {
-    // Extract name from email for demo purposes
-    const name = credentials.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase());
-    const userData = { email: credentials.email, name };
-    
-    setIsAuthenticated(true);
-    setUser(userData);
-    
-    // Save authentication state
-    if (credentials.rememberMe) {
-      localStorage.setItem('auth', 'true');
-      localStorage.setItem('user', JSON.stringify(userData));
-    } else {
-      sessionStorage.setItem('auth', 'true');
-      sessionStorage.setItem('user', JSON.stringify(userData));
-    }
-  };
-
   // Handle logout
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem('auth');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('auth');
-    sessionStorage.removeItem('user');
+  const handleLogout = async () => {
+    await logout();
   };
 
   // Toggle sidebar collapse
@@ -203,17 +169,34 @@ export default function App() {
     }
   };
 
-  // Show login page if not authenticated
+  // Show homepage or login page if not authenticated
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />;
+    if (showLogin) {
+      return (
+        <Login 
+          isDarkMode={isDarkMode} 
+          toggleTheme={toggleTheme}
+          onBack={() => setShowLogin(false)}
+        />
+      );
+    } else {
+      return (
+        <Homepage 
+          onSignIn={() => setShowLogin(true)}
+          onPostOrder={() => setShowLogin(true)}
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
+        />
+      );
+    }
   }
 
   return (
     <div className="min-h-screen w-full bg-background">
       <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen w-full bg-background">
-          {/* Sidebar - simplified without the complex positioning */}
-          <div className={`hidden md:flex flex-col border-r border-border bg-sidebar flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+          {/* Sidebar - fixed positioning to make it sticky */}
+          <div className={`hidden md:flex flex-col fixed left-0 top-0 h-screen border-r border-border bg-sidebar z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
             <SidebarHeader className={`border-b border-sidebar-border bg-sidebar ${sidebarCollapsed ? 'p-3' : 'p-6'}`}>
               <div className="flex items-center space-x-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-background shadow-md ring-1 ring-border">
@@ -239,7 +222,7 @@ export default function App() {
             
             <SidebarContent className={`bg-sidebar flex-1 ${sidebarCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
               <div className="space-y-6">
-                {menuSections.map((section, sectionIndex) => (
+                {menuSections.map((section) => (
                   <div key={section.title} className="space-y-2">
                     {!sidebarCollapsed && (
                       <div className="px-3 py-1">
@@ -312,8 +295,8 @@ export default function App() {
                       {!sidebarCollapsed && (
                         <>
                           <div className="flex-1 min-w-0 text-left">
-                            <p className="text-sm font-semibold truncate text-sidebar-foreground">{user?.name || 'Admin User'}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@globeswiftgo.com.gh'}</p>
+                            <p className="text-sm font-semibold truncate text-sidebar-foreground">{admin?.name || 'Admin User'}</p>
+                            <p className="text-xs text-muted-foreground truncate">{admin?.email || 'admin@globeswiftgo.com.gh'}</p>
                           </div>
                           <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                         </>
@@ -328,9 +311,9 @@ export default function App() {
                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-semibold">KA</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{user?.name || 'Admin User'}</p>
+                        <p className="text-sm font-semibold truncate">{admin?.name || 'Admin User'}</p>
                         <p className="text-xs text-muted-foreground truncate">Administrator</p>
-                        <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@globeswiftgo.com.gh'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{admin?.email || 'admin@globeswiftgo.com.gh'}</p>
                       </div>
                     </div>
                   </DropdownMenuLabel>
@@ -417,7 +400,7 @@ export default function App() {
             
             <SidebarContent className="px-3 py-4 bg-sidebar">
               <div className="space-y-6">
-                {menuSections.map((section, sectionIndex) => (
+                {menuSections.map((section) => (
                   <div key={section.title} className="space-y-2">
                     <div className="px-3 py-1">
                       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -470,7 +453,7 @@ export default function App() {
           </Sidebar>
 
           {/* Main Content */}
-          <div className="flex-1 flex flex-col min-w-0 bg-background">
+          <div className={`flex-1 flex flex-col min-w-0 bg-background transition-all duration-300 ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
             {/* Top Bar */}
             <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90 shadow-sm sticky top-0 z-40">
               <div className="flex h-16 items-center justify-between px-6 lg:px-8 w-full">
@@ -599,9 +582,9 @@ export default function App() {
                             <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-semibold">KA</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate">{user?.name || 'Admin User'}</p>
+                            <p className="text-sm font-semibold truncate">{admin?.name || 'Admin User'}</p>
                             <p className="text-xs text-muted-foreground truncate">Administrator</p>
-                            <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@globeswiftgo.com.gh'}</p>
+                            <p className="text-xs text-muted-foreground truncate">{admin?.email || 'admin@globeswiftgo.com.gh'}</p>
                           </div>
                         </div>
                       </DropdownMenuLabel>

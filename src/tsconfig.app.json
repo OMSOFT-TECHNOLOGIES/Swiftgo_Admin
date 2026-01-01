@@ -29,5 +29,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["*.tsx", "components/**/*", "styles/**/*"]
+  "include": ["*.tsx", "components/**/*", "styles/**/*", "hooks/**/*", "services/**/*", "types/**/*", "utils/**/*"]
 }

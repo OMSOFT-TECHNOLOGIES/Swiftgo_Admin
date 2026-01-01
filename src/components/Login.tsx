@@ -5,6 +5,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Checkbox } from "./ui/checkbox";
 import { Alert, AlertDescription } from "./ui/alert";
+import { useAuth } from '../hooks/useAuth';
 import { 
   Eye, 
   EyeOff, 
@@ -15,60 +16,95 @@ import {
   Truck,
   Sun,
   Moon,
-  AlertCircle
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  User,
+  Chrome
 } from 'lucide-react';
 // Fallback logo using data URI - replace with your actual logo
 const globeSwiftGoLogo = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzMxNzhGRiIvPgo8cGF0aCBkPSJNMTIgMTZIMjhWMjRIMTJWMTZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTYgMTJIMjBWMjhIMTZWMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
 
 interface LoginProps {
-  onLogin: (credentials: { email: string; password: string; rememberMe: boolean }) => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  onBack?: () => void; // Optional back navigation function
 }
 
-export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
+export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSignupMode, setIsSignupMode] = useState(false);
+  const { login, loading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    
+    // Clear any existing errors
+    clearError();
 
     // Basic validation
     if (!email || !password) {
-      setError('Please enter both email and password');
-      setIsLoading(false);
       return;
     }
 
     if (!email.includes('@')) {
-      setError('Please enter a valid email address');
-      setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setIsLoading(false);
       return;
     }
 
-    // Simulate authentication delay
-    setTimeout(() => {
-      // For demo purposes, accept any valid email format and password length >= 6
-      // In a real app, this would make an API call
-      if (email.includes('@') && password.length >= 6) {
-        onLogin({ email, password, rememberMe });
-      } else {
-        setError('Invalid credentials. Please try again.');
+    // Additional validation for signup
+    if (isSignupMode) {
+      if (!fullName.trim()) {
+        return;
       }
-      setIsLoading(false);
-    }, 1000);
+      if (password !== confirmPassword) {
+        return;
+      }
+    }
+
+    try {
+      if (isSignupMode) {
+        // Handle signup logic here - you'll need to implement this in your auth service
+        console.log('Signup attempt:', { email, password, fullName });
+        // For now, just switch to login mode after "successful" signup
+        setIsSignupMode(false);
+        setFullName('');
+        setConfirmPassword('');
+      } else {
+        await login({ email, password, rememberMe });
+      }
+      // Login/Signup successful - the App component will handle the redirect
+    } catch (error) {
+      // Error is handled by the useAuth hook
+      console.error(isSignupMode ? 'Signup failed:' : 'Login failed:', error);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      // Implement Google authentication here
+      console.log('Google auth initiated');
+      // You'll need to integrate with your Google OAuth setup
+    } catch (error) {
+      console.error('Google auth failed:', error);
+    }
+  };
+
+  const toggleMode = () => {
+    setIsSignupMode(!isSignupMode);
+    clearError();
+    // Reset form fields when switching modes
+    setFullName('');
+    setConfirmPassword('');
   };
 
   const features = [
@@ -79,8 +115,19 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-accent/30 flex items-center justify-center p-4">
-      {/* Theme Toggle */}
-      <div className="absolute top-6 right-6">
+      {/* Navigation & Theme Toggle */}
+      <div className="absolute top-6 right-6 flex items-center space-x-2">
+        {onBack && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onBack}
+            className="hover:bg-accent rounded-lg transition-colors p-2"
+            title="Back to homepage"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
         <Button 
           variant="ghost" 
           size="sm" 
@@ -117,11 +164,16 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
             
             <div className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">
-                Manage Ghana's Premier Delivery Service
+                {isSignupMode 
+                  ? 'Join Ghana\'s Premier Delivery Network' 
+                  : 'Manage Ghana\'s Premier Delivery Service'
+                }
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Streamline operations, track deliveries in real-time, and manage your rider network 
-                across Accra, Kumasi, Tamale, and beyond.
+                {isSignupMode
+                  ? 'Create your admin account to start managing deliveries, tracking orders, and coordinating your rider network across Ghana.'
+                  : 'Streamline operations, track deliveries in real-time, and manage your rider network across Accra, Kumasi, Tamale, and beyond.'
+                }
               </p>
             </div>
           </div>
@@ -178,14 +230,40 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
               </div>
 
               <div className="text-center space-y-2">
-                <CardTitle className="text-2xl font-semibold">Welcome Back</CardTitle>
+                <CardTitle className="text-2xl font-semibold">
+                  {isSignupMode ? 'Create Account' : 'Welcome Back'}
+                </CardTitle>
                 <CardDescription className="text-base">
-                  Sign in to your administrator account to access the dashboard
+                  {isSignupMode 
+                    ? 'Create your administrator account to get started'
+                    : 'Sign in to your administrator account to access the dashboard'
+                  }
                 </CardDescription>
               </div>
             </CardHeader>
 
             <CardContent>
+              {/* Google Sign In Button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleAuth}
+                className="w-full h-12 mb-6 border-2 hover:bg-accent transition-colors"
+                disabled={loading}
+              >
+                <Chrome className="mr-3 h-5 w-5 text-blue-600" />
+                Continue with Google
+              </Button>
+
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+                </div>
+              </div>
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
                   <Alert className="border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive">
@@ -195,6 +273,26 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
                 )}
 
                 <div className="space-y-4">
+                  {/* Full Name Field - Only show in signup mode */}
+                  {isSignupMode && (
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="fullName"
+                          type="text"
+                          placeholder="John Doe"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="pl-10 h-12 bg-input-background border-border focus:border-primary"
+                          required={isSignupMode}
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
                     <div className="relative">
@@ -218,11 +316,12 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
+                        placeholder={isSignupMode ? "Create a strong password" : "Enter your password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10 pr-10 h-12 bg-input-background border-border focus:border-primary"
                         required
+                        disabled={loading}
                       />
                       <Button
                         type="button"
@@ -230,6 +329,7 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
                         size="sm"
                         className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
+                        disabled={loading}
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -239,39 +339,96 @@ export function Login({ onLogin, isDarkMode, toggleTheme }: LoginProps) {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Confirm Password Field - Only show in signup mode */}
+                  {isSignupMode && (
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-10 pr-10 h-12 bg-input-background border-border focus:border-primary"
+                          required={isSignupMode}
+                          disabled={loading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          disabled={loading}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      {confirmPassword && password !== confirmPassword && (
+                        <p className="text-sm text-destructive">Passwords do not match</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    />
-                    <Label htmlFor="remember" className="text-sm font-medium">
-                      Remember me
-                    </Label>
+                {/* Remember Me - Only show in login mode */}
+                {!isSignupMode && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="remember"
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        disabled={loading}
+                      />
+                      <Label htmlFor="remember" className="text-sm font-medium">
+                        Remember me
+                      </Label>
+                    </div>
+                    <Button variant="link" className="p-0 h-auto text-sm text-primary hover:text-primary/80" disabled={loading}>
+                      Forgot password?
+                    </Button>
                   </div>
-                  <Button variant="link" className="p-0 h-auto text-sm text-primary hover:text-primary/80">
-                    Forgot password?
-                  </Button>
-                </div>
+                )}
 
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium shadow-lg transition-all duration-200"
-                  disabled={isLoading}
+                  disabled={loading || (isSignupMode && password !== confirmPassword)}
                 >
-                  {isLoading ? (
+                  {loading ? (
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Signing In...</span>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{isSignupMode ? 'Creating Account...' : 'Signing In...'}</span>
                     </div>
                   ) : (
-                    "Sign In to Dashboard"
+                    isSignupMode ? "Create Account" : "Sign In to Dashboard"
                   )}
                 </Button>
               </form>
+
+              {/* Toggle between login and signup */}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {isSignupMode ? 'Already have an account?' : "Don't have an account?"}
+                  {' '}
+                  <button
+                    type="button"
+                    onClick={toggleMode}
+                    className="text-primary hover:underline font-medium transition-colors"
+                    disabled={loading}
+                  >
+                    {isSignupMode ? 'Sign In' : 'Create Account'}
+                  </button>
+                </p>
+              </div>
 
               <div className="mt-8 pt-6 border-t border-border text-center">
                 <p className="text-sm text-muted-foreground">

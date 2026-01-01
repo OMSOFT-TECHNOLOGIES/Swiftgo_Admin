@@ -5,17 +5,16 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
-import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Progress } from "./ui/progress";
-import { Separator } from "./ui/separator";
-import { Alert, AlertDescription } from "./ui/alert";
-import { ScrollArea } from "./ui/scroll-area";
 import { toast } from "sonner";
+import { useRiders } from '../hooks/useRiders';
+import { usePendingRiders } from '../hooks/usePendingRiders';
+import { RidersFilters, PendingRiderApplication } from '../types/auth';
 import { 
   Search, 
   Eye, 
@@ -262,167 +261,8 @@ const trainingModules: TrainingModule[] = [
   }
 ];
 
-const pendingApplications: OnboardingApplication[] = [
-  {
-    id: 'GSO-2024-001',
-    name: 'Akosua Osei',
-    email: 'akosua.osei@gmail.com',
-    phone: '+233 24 234 5678',
-    address: 'East Legon, Accra, Greater Accra Region',
-    emergencyContact: {
-      name: 'Kwame Osei',
-      phone: '+233 20 345 6789',
-      relationship: 'Brother'
-    },
-    vehicle: 'Bicycle',
-    licenseNumber: 'GL-123456789',
-    nationalId: 'GHA-123456789012',
-    bankAccount: {
-      name: 'Akosua Osei',
-      number: '1234567890',
-      bank: 'GCB Bank'
-    },
-    documents: {
-      nationalId: { name: 'National ID Card', status: 'verified', uploadDate: '2024-08-28' },
-      drivingLicense: { name: 'Driving License', status: 'verified', uploadDate: '2024-08-28' },
-      insurance: { name: 'Vehicle Insurance', status: 'pending', uploadDate: '2024-08-29' },
-      vehicleRegistration: { name: 'Vehicle Registration', status: 'pending' },
-      backgroundCheck: { name: 'Criminal Background Check', status: 'verified', uploadDate: '2024-08-30' },
-      bankStatement: { name: 'Bank Account Statement', status: 'verified', uploadDate: '2024-08-28' },
-      medicalCertificate: { name: 'Medical Certificate', status: 'pending' },
-      passport: { name: 'Passport Photo', status: 'verified', uploadDate: '2024-08-28' }
-    },
-    training: trainingModules.map(module => ({ ...module, status: 'not_started' })),
-    applicationDate: '2024-08-28',
-    progress: 65,
-    currentStep: 'Document Review',
-    status: 'document_review',
-    assignedReviewer: 'Joseph Mensah',
-    reviewNotes: 'Insurance and vehicle registration documents pending',
-    equipmentAssigned: {
-      uniform: false,
-      helmet: false,
-      bag: false,
-      phone: false,
-      gps: false
-    },
-    interviewScheduled: {
-      date: '2024-09-05',
-      time: '10:00 AM',
-      type: 'video',
-      interviewer: 'Sarah Boateng',
-      status: 'scheduled'
-    }
-  },
-  {
-    id: 'GSO-2024-002',
-    name: 'Kofi Adjei',
-    email: 'kofi.adjei@yahoo.com',
-    phone: '+233 26 345 6789',
-    address: 'Osu, Accra, Greater Accra Region',
-    emergencyContact: {
-      name: 'Ama Adjei',
-      phone: '+233 24 567 8901',
-      relationship: 'Wife'
-    },
-    vehicle: 'Okada (Motorcycle)',
-    licenseNumber: 'GL-987654321',
-    nationalId: 'GHA-987654321098',
-    bankAccount: {
-      name: 'Kofi Adjei',
-      number: '9876543210',
-      bank: 'Standard Chartered Bank'
-    },
-    documents: {
-      nationalId: { name: 'National ID Card', status: 'verified', uploadDate: '2024-08-30' },
-      drivingLicense: { name: 'Driving License', status: 'verified', uploadDate: '2024-08-30' },
-      insurance: { name: 'Vehicle Insurance', status: 'verified', uploadDate: '2024-08-30' },
-      vehicleRegistration: { name: 'Vehicle Registration', status: 'verified', uploadDate: '2024-08-30' },
-      backgroundCheck: { name: 'Criminal Background Check', status: 'pending' },
-      bankStatement: { name: 'Bank Account Statement', status: 'verified', uploadDate: '2024-08-30' },
-      medicalCertificate: { name: 'Medical Certificate', status: 'verified', uploadDate: '2024-08-31' },
-      passport: { name: 'Passport Photo', status: 'verified', uploadDate: '2024-08-30' }
-    },
-    training: trainingModules.map(module => ({ ...module, status: 'not_started' })),
-    applicationDate: '2024-08-30',
-    progress: 80,
-    currentStep: 'Background Check',
-    status: 'background_check',
-    assignedReviewer: 'Emmanuel Kwaku',
-    reviewNotes: 'Waiting for police clearance certificate',
-    equipmentAssigned: {
-      uniform: false,
-      helmet: false,
-      bag: false,
-      phone: false,
-      gps: false
-    },
-    interviewScheduled: {
-      date: '2024-09-06',
-      time: '2:00 PM',
-      type: 'in_person',
-      interviewer: 'Michael Asante',
-      status: 'scheduled'
-    }
-  },
-  {
-    id: 'GSO-2024-003',
-    name: 'Efua Mensah',
-    email: 'efua.mensah@gmail.com',
-    phone: '+233 27 456 7890',
-    address: 'Tema, Greater Accra Region',
-    emergencyContact: {
-      name: 'Yaw Mensah',
-      phone: '+233 23 678 9012',
-      relationship: 'Husband'
-    },
-    vehicle: 'Bicycle',
-    licenseNumber: 'GL-456789123',
-    nationalId: 'GHA-456789123456',
-    bankAccount: {
-      name: 'Efua Mensah',
-      number: '4567891234',
-      bank: 'Fidelity Bank'
-    },
-    documents: {
-      nationalId: { name: 'National ID Card', status: 'verified', uploadDate: '2024-09-01' },
-      drivingLicense: { name: 'Driving License', status: 'verified', uploadDate: '2024-09-01' },
-      insurance: { name: 'Vehicle Insurance', status: 'verified', uploadDate: '2024-09-01' },
-      vehicleRegistration: { name: 'Vehicle Registration', status: 'verified', uploadDate: '2024-09-01' },
-      backgroundCheck: { name: 'Criminal Background Check', status: 'verified', uploadDate: '2024-09-02' },
-      bankStatement: { name: 'Bank Account Statement', status: 'verified', uploadDate: '2024-09-01' },
-      medicalCertificate: { name: 'Medical Certificate', status: 'verified', uploadDate: '2024-09-01' },
-      passport: { name: 'Passport Photo', status: 'verified', uploadDate: '2024-09-01' }
-    },
-    training: trainingModules.map((module, index) => ({ 
-      ...module, 
-      status: index < 3 ? 'completed' : 'not_started',
-      score: index < 3 ? 85 + (index * 5) : undefined,
-      completedDate: index < 3 ? '2024-09-02' : undefined
-    })),
-    applicationDate: '2024-09-01',
-    progress: 95,
-    currentStep: 'Training',
-    status: 'training',
-    assignedReviewer: 'Grace Appiah',
-    reviewNotes: 'Excellent candidate. Completing final training modules.',
-    equipmentAssigned: {
-      uniform: true,
-      helmet: true,
-      bag: true,
-      phone: false,
-      gps: false
-    },
-    interviewScheduled: {
-      date: '2024-09-03',
-      time: '11:00 AM',
-      type: 'video',
-      interviewer: 'Daniel Nkrumah',
-      status: 'completed',
-      notes: 'Great communication skills and enthusiasm. Highly recommended for approval.'
-    }
-  }
-];
+// Only using API data for onboarding - no mock data
+const initialPendingApplications: OnboardingApplication[] = [];
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -454,7 +294,9 @@ const getDocumentStatus = (status: string) => {
 
 export function Riders() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED' | 'ONLINE' | 'OFFLINE'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageLimit] = useState(20);
   const [applicationFilter, setApplicationFilter] = useState('all');
   const [selectedApplication, setSelectedApplication] = useState<OnboardingApplication | null>(null);
   const [isOnboardingDetailOpen, setIsOnboardingDetailOpen] = useState(false);
@@ -464,15 +306,161 @@ export function Riders() {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Use the riders API hook
+  const { riders, pagination, loading, error, fetchRiders, clearError } = useRiders();
+  
+  // Use the pending riders API hook
+  const { 
+    applications: apiApplications, 
+    pagination: applicationsPagination,
+    loading: applicationsLoading, 
+    error: applicationsError, 
+    fetchPendingRiders, 
+    approveApplication: apiApproveApplication,
+    rejectApplication: apiRejectApplication,
+    clearError: clearApplicationsError 
+  } = usePendingRiders();
 
-  const filteredRiders = riders.filter(rider => {
-    const matchesSearch = rider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rider.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || rider.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Helper function to get rider initials
+  const getRiderInitials = (rider: any) => {
+    const name = rider.name || '';
+    const email = rider.email || '';
+    
+    if (name) {
+      const nameParts = name.split(' ');
+      if (nameParts.length >= 2) {
+        return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+      } else {
+        return nameParts[0][0].toUpperCase();
+      }
+    } else if (email) {
+      return email[0].toUpperCase();
+    }
+    return '??';
+  };
 
-  const filteredApplications = pendingApplications.filter(app => {
+  // Helper function to get rider full name
+  const getRiderName = (rider: any) => {
+    if (rider.name) {
+      return rider.name;
+    } else if (rider.email) {
+      return rider.email.split('@')[0]; // Use email username as fallback
+    }
+    return 'Unknown Rider';
+  };
+
+  // Fetch riders when filters change
+  useEffect(() => {
+    const filters: RidersFilters = {
+      page: currentPage,
+      limit: pageLimit,
+      search: searchTerm || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchRiders(filters);
+    }, 300); // Debounce search
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, statusFilter, currentPage, pageLimit, fetchRiders]);
+
+  // Fetch pending riders on component mount and when application filter changes
+  useEffect(() => {
+    const filters: RidersFilters = {
+      page: 1,
+      limit: 50, // Get more applications for onboarding
+      search: searchTerm || undefined
+    };
+
+    fetchPendingRiders(filters);
+  }, [fetchPendingRiders, searchTerm]);
+
+  // Transform API applications to match UI interface
+  const transformApiApplication = (apiApp: PendingRiderApplication): OnboardingApplication => {
+    return {
+      id: apiApp.id.toString(),
+      name: apiApp.name,
+      email: apiApp.email,
+      phone: '', // Not provided by API
+      address: '', // Not provided by API
+      emergencyContact: {
+        name: '',
+        phone: '',
+        relationship: ''
+      },
+      vehicle: apiApp.vehicle_details?.type + ' - ' + apiApp.vehicle_details?.model || 'Unknown Vehicle',
+      licenseNumber: '',
+      nationalId: apiApp.national_id,
+      bankAccount: {
+        name: '',
+        number: '',
+        bank: ''
+      },
+      documents: {
+        nationalId: { name: 'National ID', status: apiApp.is_verified ? 'verified' : 'pending' },
+        drivingLicense: { name: 'Driving License', status: 'pending' },
+        insurance: { name: 'Insurance', status: 'pending' },
+        vehicleRegistration: { name: 'Vehicle Registration', status: 'pending' },
+        backgroundCheck: { name: 'Background Check', status: 'pending' },
+        bankStatement: { name: 'Bank Statement', status: 'pending' },
+        medicalCertificate: { name: 'Medical Certificate', status: 'pending' },
+        passport: { name: 'Passport Photo', status: 'pending' }
+      },
+      training: trainingModules.map(module => ({ ...module, status: 'not_started' })),
+      applicationDate: apiApp.created_at,
+      progress: apiApp.status === 'PENDING' ? 25 : 50,
+      currentStep: apiApp.status === 'PENDING' ? 'Application Submitted' : 'Document Review',
+      status: apiApp.status === 'PENDING' ? 'submitted' : 'document_review',
+      assignedReviewer: '',
+      reviewNotes: '',
+      equipmentAssigned: {
+        uniform: false,
+        helmet: false,
+        bag: false,
+        phone: false,
+        gps: false
+      }
+    };
+  };
+
+  // Only use API applications for onboarding (no mock data)
+  const allApplications = (apiApplications || []).map(transformApiApplication);
+
+  // Handle status filter change
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value as any);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  // Handle search change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Map API rider status to display badge
+  const getStatusBadge = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'ACTIVE':
+        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+      case 'ONLINE':
+        return <Badge className="bg-green-100 text-green-800">Online</Badge>;
+      case 'OFFLINE':
+        return <Badge className="bg-gray-100 text-gray-800">Offline</Badge>;
+      case 'PENDING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'SUSPENDED':
+        return <Badge className="bg-red-100 text-red-800">Suspended</Badge>;
+      case 'REJECTED':
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+      default:
+        return <Badge>Unknown</Badge>;
+    }
+  };
+
+  const filteredApplications = allApplications.filter(app => {
     const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          app.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -482,20 +470,44 @@ export function Riders() {
 
   const handleApproveApplication = async (applicationId: string) => {
     setIsProcessing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsProcessing(false);
+    
+    try {
+      // Use real API for all applications (no more static data)
+      await apiApproveApplication(applicationId, 'Application approved by admin');
       toast.success('Application approved successfully');
-    }, 2000);
+      
+      setIsProcessing(false);
+      
+      // Close the detail modal if it's open
+      if (selectedApplication?.id === applicationId) {
+        setIsOnboardingDetailOpen(false);
+        setSelectedApplication(null);
+      }
+    } catch (error: any) {
+      setIsProcessing(false);
+      toast.error(error.message || 'Failed to approve application');
+    }
   };
 
   const handleRejectApplication = async (applicationId: string, reason: string) => {
     setIsProcessing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsProcessing(false);
+    
+    try {
+      // Use real API for all applications (no more static data)
+      await apiRejectApplication(applicationId, reason);
       toast.success('Application rejected');
-    }, 1500);
+      
+      setIsProcessing(false);
+      
+      // Close the detail modal if it's open
+      if (selectedApplication?.id === applicationId) {
+        setIsOnboardingDetailOpen(false);
+        setSelectedApplication(null);
+      }
+    } catch (error: any) {
+      setIsProcessing(false);
+      toast.error(error.message || 'Failed to reject application');
+    }
   };
 
   const handleDocumentApproval = (documentType: string, approved: boolean) => {
@@ -577,7 +589,7 @@ export function Riders() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Riders</p>
-                    <p className="text-3xl font-bold text-gray-900">45</p>
+                    <p className="text-3xl font-bold text-gray-900">{pagination?.total_riders || 0}</p>
                   </div>
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <MapPin className="h-6 w-6 text-blue-600" />
@@ -590,7 +602,7 @@ export function Riders() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Active Now</p>
-                    <p className="text-3xl font-bold text-gray-900">32</p>
+                    <p className="text-3xl font-bold text-gray-900">{riders.filter(r => r.status === 'ONLINE' || r.status === 'ACTIVE').length}</p>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg">
                     <CheckCircle className="h-6 w-6 text-green-600" />
@@ -616,7 +628,7 @@ export function Riders() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Pending Apps</p>
-                    <p className="text-3xl font-bold text-gray-900">{pendingApplications.length}</p>
+                    <p className="text-3xl font-bold text-gray-900">{allApplications.length}</p>
                   </div>
                   <div className="p-3 bg-orange-50 rounded-lg">
                     <Clock className="h-6 w-6 text-orange-600" />
@@ -635,20 +647,22 @@ export function Riders() {
                   <Input
                     placeholder="Search riders..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
-                    <SelectItem value="busy">Busy</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="ONLINE">Online</SelectItem>
+                    <SelectItem value="OFFLINE">Offline</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button>
@@ -662,7 +676,7 @@ export function Riders() {
           {/* Riders Table */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold">Riders ({filteredRiders.length})</CardTitle>
+              <CardTitle className="text-xl font-semibold">Riders ({riders.length})</CardTitle>
               <CardDescription className="text-base">All registered delivery riders</CardDescription>
             </CardHeader>
             <CardContent>
@@ -680,17 +694,63 @@ export function Riders() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRiders.map((rider) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          <span>Loading riders...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <div className="space-y-2">
+                          <p className="text-red-600">Error loading riders: {error}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              clearError();
+                              fetchRiders({
+                                page: currentPage,
+                                limit: pageLimit,
+                                search: searchTerm || undefined,
+                                status: statusFilter === 'all' ? undefined : statusFilter
+                              });
+                            }}
+                          >
+                            Retry
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : riders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <div className="space-y-2">
+                          <p className="text-muted-foreground">No riders found</p>
+                          {(searchTerm || statusFilter !== 'all') && (
+                            <p className="text-sm text-muted-foreground">Try adjusting your filters</p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    riders.map((rider) => (
                     <TableRow key={rider.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar>
-                            <AvatarImage src={rider.avatar} />
-                            <AvatarFallback>{rider.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${rider.name}`} />
+                            <AvatarFallback>
+                              {getRiderInitials(rider)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{rider.name}</p>
-                            <p className="text-sm text-muted-foreground">{rider.id}</p>
+                            <p className="font-medium">{getRiderName(rider)}</p>
+                            <p className="text-sm text-muted-foreground">ID: {rider.id}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -702,7 +762,7 @@ export function Riders() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Phone className="h-3 w-3" />
-                            <span className="text-sm">{rider.phone}</span>
+                            <span className="text-sm">{rider.national_id || 'N/A'}</span>
                           </div>
                         </div>
                       </TableCell>
@@ -710,99 +770,176 @@ export function Riders() {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span>{rider.rating}</span>
+                          <span>{rider.average_rating ? rider.average_rating.toFixed(1) : 'N/A'}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{rider.totalDeliveries}</TableCell>
-                      <TableCell>{rider.vehicle}</TableCell>
-                      <TableCell>{rider.earnings}</TableCell>
+                      <TableCell>{rider.total_deliveries || 0}</TableCell>
+                      <TableCell>{rider.vehicle_details?.type || 'N/A'}</TableCell>
+                      <TableCell>$0.00</TableCell>
                       <TableCell>
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
+                              View
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Rider Details - {rider.name}</DialogTitle>
-                              <DialogDescription>
-                                Complete information about this rider
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="flex items-center space-x-4">
-                                <Avatar className="h-16 w-16">
-                                  <AvatarImage src={rider.avatar} />
-                                  <AvatarFallback>{rider.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              <DialogTitle className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${rider.name}`} />
+                                  <AvatarFallback>
+                                    {getRiderInitials(rider)}
+                                  </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <h3 className="text-lg font-semibold">{rider.name}</h3>
-                                  <p className="text-muted-foreground">{rider.id}</p>
-                                  {getStatusBadge(rider.status)}
+                                  <div className="text-lg font-semibold">{getRiderName(rider)}</div>
+                                  <div className="text-sm text-muted-foreground">Rider ID: {rider.id}</div>
                                 </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="font-medium">Email</label>
-                                  <p>{rider.email}</p>
-                                </div>
-                                <div>
-                                  <label className="font-medium">Phone</label>
-                                  <p>{rider.phone}</p>
-                                </div>
-                                <div>
-                                  <label className="font-medium">Vehicle Type</label>
-                                  <p>{rider.vehicle}</p>
-                                </div>
-                                <div>
-                                  <label className="font-medium">Current Location</label>
-                                  <p>{rider.location}</p>
-                                </div>
-                                <div>
-                                  <label className="font-medium">Join Date</label>
-                                  <p>{new Date(rider.joinDate).toLocaleDateString()}</p>
-                                </div>
-                                <div>
-                                  <label className="font-medium">Total Earnings</label>
-                                  <p>{rider.earnings}</p>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="font-medium">Rating</label>
-                                  <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                    <span>{rider.rating}/5</span>
+                              </DialogTitle>
+                            </DialogHeader>
+                            
+                            <div className="space-y-6">
+                              {/* Basic Info */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium">Contact Information</Label>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <Mail className="h-4 w-4" />
+                                      <span className="text-sm">{rider.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Phone className="h-4 w-4" />
+                                      <span className="text-sm">{rider.national_id || 'N/A'}</span>
+                                    </div>
                                   </div>
                                 </div>
-                                <div>
-                                  <label className="font-medium">Total Deliveries</label>
-                                  <p>{rider.totalDeliveries}</p>
+                                
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium">Status & Performance</Label>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm">Status:</span>
+                                      {getStatusBadge(rider.status)}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                      <span className="text-sm">Rating: {rider.average_rating ? rider.average_rating.toFixed(1) : 'N/A'}</span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex gap-2 pt-4">
-                                <Button size="sm">
-                                  <MapPin className="h-4 w-4 mr-2" />
-                                  View Location
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  Send Message
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  Edit Profile
-                                </Button>
+
+                              {/* Stats Cards */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <Card>
+                                  <CardContent className="p-4">
+                                    <div className="text-center">
+                                      <div className="text-2xl font-bold">{rider.total_deliveries || 0}</div>
+                                      <div className="text-sm text-muted-foreground">Total Deliveries</div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                                
+                                <Card>
+                                  <CardContent className="p-4">
+                                    <div className="text-center">
+                                      <div className="text-2xl font-bold">$0.00</div>
+                                      <div className="text-sm text-muted-foreground">Total Earnings</div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                                
+                                <Card>
+                                  <CardContent className="p-4">
+                                    <div className="text-center">
+                                      <div className="text-2xl font-bold">{rider.vehicle_details?.type || 'N/A'}</div>
+                                      <div className="text-sm text-muted-foreground">Vehicle Type</div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </div>
+
+                              {/* Additional Info */}
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium">Account Information</Label>
+                                <div className="text-sm space-y-1">
+                                  <div>Status: {rider.is_verified ? 'Verified' : 'Pending Verification'}</div>
+                                  <div>National ID: {rider.national_id || 'Not provided'}</div>
+                                  {rider.vehicle_details && (
+                                    <div>Vehicle: {rider.vehicle_details.model} ({rider.vehicle_details.type})</div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Timestamps */}
+                              <div className="pt-4 border-t">
+                                <div className="text-xs text-muted-foreground space-y-1">
+                                  <div>Joined: {new Date(rider.created_at).toLocaleDateString()}</div>
+                                  <div>Last Updated: {new Date(rider.updated_at).toLocaleDateString()}</div>
+                                </div>
                               </div>
                             </div>
                           </DialogContent>
                         </Dialog>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
+
+          {/* Pagination */}
+          {riders.length > 0 && (
+            <Card className="border-0 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * pageLimit) + 1} to {Math.min(currentPage * pageLimit, pagination?.total_riders || 0)} of {pagination?.total_riders || 0} riders
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1 || loading}
+                    >
+                      Previous
+                    </Button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {pagination && Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
+                        const pageNum = Math.max(1, Math.min(pagination.total_pages, currentPage - 2 + i));
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={pageNum === currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            disabled={loading}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(pagination?.total_pages || 1, prev + 1))}
+                      disabled={currentPage === pagination?.total_pages || loading}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="onboarding" className="space-y-6">
@@ -813,7 +950,7 @@ export function Riders() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Pending Applications</p>
-                    <p className="text-2xl font-semibold">{pendingApplications.length}</p>
+                    <p className="text-2xl font-semibold">{allApplications.length}</p>
                     <p className="text-xs text-blue-600">+3 this week</p>
                   </div>
                   <UserPlus className="h-8 w-8 text-blue-600" />
@@ -826,7 +963,7 @@ export function Riders() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">In Review</p>
-                    <p className="text-2xl font-semibold">{pendingApplications.filter(a => a.status === 'document_review').length}</p>
+                    <p className="text-2xl font-semibold">{allApplications.filter(a => a.status === 'document_review').length}</p>
                     <p className="text-xs text-yellow-600">Documents pending</p>
                   </div>
                   <ClipboardCheck className="h-8 w-8 text-yellow-600" />
@@ -839,7 +976,7 @@ export function Riders() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">In Training</p>
-                    <p className="text-2xl font-semibold">{pendingApplications.filter(a => a.status === 'training').length}</p>
+                    <p className="text-2xl font-semibold">{allApplications.filter(a => a.status === 'training').length}</p>
                     <p className="text-xs text-purple-600">Active learners</p>
                   </div>
                   <GraduationCap className="h-8 w-8 text-purple-600" />
@@ -1052,6 +1189,16 @@ export function Riders() {
                             <MessageSquare className="h-4 w-4 mr-2" />
                             Contact
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleApproveApplication(app.id)}
+                            disabled={isProcessing}
+                            className="text-green-600 border-green-600 hover:bg-green-50"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Approve
+                          </Button>
                           {app.status === 'final_review' && (
                             <>
                               <Button 
@@ -1220,7 +1367,7 @@ export function Riders() {
                     {/* Equipment Assignment Queue */}
                     <div className="space-y-4">
                       <h4 className="font-medium">Pending Equipment Assignments</h4>
-                      {pendingApplications
+                      {allApplications
                         .filter(app => app.status === 'training' || app.status === 'final_review')
                         .map((app) => (
                           <Card key={app.id} className="border-0 shadow-md">
