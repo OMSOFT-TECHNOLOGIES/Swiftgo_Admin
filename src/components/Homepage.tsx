@@ -399,31 +399,55 @@ export const Homepage = ({ onSignIn, onPostOrder, isDarkMode, toggleTheme }: Hom
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {services.map((service, index) => (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-border">
-                <CardContent className="p-8">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 rounded-lg flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-blue-600/20 group-hover:to-indigo-600/20 transition-colors">
-                        <service.icon className="h-8 w-8 text-blue-600" />
-                      </div>
+            {services.map((service, index) => {
+              const serviceImages = [
+                'https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?w=400&h=250&fit=crop&crop=center', // Express Delivery
+                'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=250&fit=crop&crop=center', // Fleet Management
+                'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=400&h=250&fit=crop&crop=center', // Nationwide Coverage
+                'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=250&fit=crop&crop=center'  // Secure Logistics
+              ];
+              
+              return (
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-border overflow-hidden">
+                  {/* Service Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={serviceImages[index]} 
+                      alt={service.title}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling!.classList.remove('hidden');
+                      }}
+                    />
+                    {/* Fallback */}
+                    <div className="hidden w-full h-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                      <service.icon className="h-16 w-16 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-foreground mb-3">{service.title}</h3>
-                      <p className="text-muted-foreground mb-4">{service.description}</p>
-                      <ul className="space-y-2">
-                        {service.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-center text-sm text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    {/* Service icon overlay */}
+                    <div className="absolute top-4 right-4 w-12 h-12 bg-white/90 rounded-xl flex items-center justify-center shadow-lg">
+                      <service.icon className="h-6 w-6 text-blue-600" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold text-foreground mb-3">{service.title}</h3>
+                    <p className="text-muted-foreground mb-4 leading-relaxed">{service.description}</p>
+                    <ul className="space-y-2">
+                      {service.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center text-sm text-muted-foreground">
+                          <CheckCircle className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -473,23 +497,53 @@ export const Homepage = ({ onSignIn, onPostOrder, isDarkMode, toggleTheme }: Hom
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {howItWorks.map((step, index) => (
-              <div key={index} className="text-center relative">
-                {/* Connection line */}
-                {index < howItWorks.length - 1 && (
-                  <div className="hidden lg:block absolute top-16 left-full w-full h-0.5 bg-border transform -translate-x-1/2"></div>
-                )}
-                
-                <div className="relative z-10 w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-white">{step.step}</span>
+            {howItWorks.map((step, index) => {
+              const stepImages = [
+                'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=300&h=200&fit=crop&crop=center', // Order placement
+                'https://images.unsplash.com/photo-1558618666-fbd00c0cd61c?w=300&h=200&fit=crop&crop=center', // Rider assignment 
+                'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=300&h=200&fit=crop&crop=center', // Live tracking
+                'https://images.unsplash.com/photo-1565807904742-d3466026aff0?w=300&h=200&fit=crop&crop=center'  // Safe delivery
+              ];
+              
+              return (
+                <div key={index} className="text-center relative">
+                  {/* Connection line */}
+                  {index < howItWorks.length - 1 && (
+                    <div className="hidden lg:block absolute top-24 left-full w-full h-0.5 bg-border transform -translate-x-1/2 z-0"></div>
+                  )}
+                  
+                  {/* Step number badge */}
+                  <div className="relative z-10 w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <span className="text-lg font-bold text-white">{step.step}</span>
+                  </div>
+                  
+                  {/* Step image */}
+                  <div className="relative mb-6">
+                    <img 
+                      src={stepImages[index]} 
+                      alt={step.title}
+                      className="w-full h-48 object-cover rounded-xl shadow-lg transition-transform hover:scale-105 duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling!.classList.remove('hidden');
+                      }}
+                    />
+                    {/* Fallback icon */}
+                    <div className="hidden w-full h-48 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 rounded-xl flex items-center justify-center">
+                      <step.icon className="h-16 w-16 text-blue-600" />
+                    </div>
+                    {/* Overlay with step icon */}
+                    <div className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-lg flex items-center justify-center shadow-md">
+                      <step.icon className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-lg font-semibold text-foreground mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <step.icon className="h-6 w-6 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{step.title}</h3>
-                <p className="text-sm text-muted-foreground">{step.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -706,8 +760,41 @@ export const Homepage = ({ onSignIn, onPostOrder, isDarkMode, toggleTheme }: Hom
               </div>
             </div>
             <div className="relative">
-              <div className="aspect-square bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl flex items-center justify-center">
+              <img 
+                src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=600&fit=crop&crop=center"
+                alt="Mobile app interface showing delivery tracking"
+                className="w-full max-w-sm mx-auto h-96 object-cover rounded-3xl shadow-2xl border-8 border-white/10"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling!.classList.remove('hidden');
+                }}
+              />
+              {/* Fallback */}
+              <div className="hidden aspect-square bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl flex items-center justify-center">
                 <Smartphone className="h-32 w-32 text-blue-600/50" />
+              </div>
+              
+              {/* Floating app features */}
+              <div className="absolute -top-4 -left-4 bg-card border border-border rounded-lg p-3 shadow-xl">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium">Live GPS</span>
+                </div>
+              </div>
+              
+              <div className="absolute -bottom-4 -right-4 bg-card border border-border rounded-lg p-3 shadow-xl">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">4.9★</div>
+                  <div className="text-xs text-muted-foreground">App Rating</div>
+                </div>
+              </div>
+              
+              <div className="absolute top-1/2 -right-6 bg-card border border-border rounded-lg p-3 shadow-xl">
+                <div className="text-center">
+                  <div className="text-sm font-bold text-foreground">50K+</div>
+                  <div className="text-xs text-muted-foreground">Downloads</div>
+                </div>
               </div>
             </div>
           </div>
@@ -785,6 +872,40 @@ export const Homepage = ({ onSignIn, onPostOrder, isDarkMode, toggleTheme }: Hom
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            {/* Left side - Partnership Image */}
+            <div className="relative">
+              <img 
+                src="https://images.unsplash.com/photo-1560472355-536de3962603?w=600&h=400&fit=crop&crop=center"
+                alt="Business partnership handshake"
+                className="w-full h-96 object-cover rounded-2xl shadow-xl"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling!.classList.remove('hidden');
+                }}
+              />
+              {/* Fallback */}
+              <div className="hidden w-full h-96 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center">
+                <HeartHandshake className="h-24 w-24 text-white" />
+              </div>
+              
+              {/* Floating partner count */}
+              <div className="absolute -bottom-6 -left-6 bg-card border border-border rounded-lg p-4 shadow-xl">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">200+</div>
+                  <div className="text-xs text-muted-foreground">Active Partners</div>
+                </div>
+              </div>
+              
+              <div className="absolute -top-6 -right-6 bg-card border border-border rounded-lg p-4 shadow-xl">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">₵2M+</div>
+                  <div className="text-xs text-muted-foreground">Partner Revenue</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Content */}
             <div>
               <h3 className="text-2xl font-semibold text-foreground mb-6">Why Partner with Us?</h3>
               <div className="space-y-6">
