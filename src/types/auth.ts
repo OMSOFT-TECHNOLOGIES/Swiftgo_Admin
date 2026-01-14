@@ -4,6 +4,21 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
+export interface SignupData {
+  fullName: string;
+  email: string;
+  password: string;
+  type?: 'admin' | 'user'; // Optional type, defaults to 'user'
+}
+
+export interface GoogleAuthResponse {
+  token: string;
+  admin?: Admin;
+  user?: Admin;
+  message: string;
+  isNewUser?: boolean;
+}
+
 export interface Admin {
   id: string; // Changed from number to string to match API response
   email: string;

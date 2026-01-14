@@ -1,7 +1,9 @@
 import { API_CONFIG, getAuthHeaders } from '../utils/apiConfig';
 import { 
-  LoginCredentials, 
+  LoginCredentials,
+  SignupData,
   LoginResponse, 
+  GoogleAuthResponse,
   ApiError, 
   RidersResponse, 
   RidersFilters,
@@ -86,11 +88,52 @@ class ApiService {
       password: credentials.password
     };
 
+    // Determine endpoint based on email type
+    const endpoint = credentials.email.toLowerCase().includes('admin') 
+      ? API_CONFIG.ENDPOINTS.AUTH.LOGIN 
+      : API_CONFIG.ENDPOINTS.AUTH.USER_LOGIN;
+
     const response = await this.request<LoginResponse>(
-      API_CONFIG.ENDPOINTS.AUTH.LOGIN,
+      endpoint,
       {
         method: 'POST',
         body: JSON.stringify(requestBody),
+      }
+    );
+
+    return response;
+  }
+
+  async signup(signupData: SignupData): Promise<LoginResponse> {
+    const requestBody = {
+      fullName: signupData.fullName,
+      email: signupData.email,
+      password: signupData.password,
+      type: signupData.type || 'user'
+    };
+
+    const response = await this.request<LoginResponse>(
+      API_CONFIG.ENDPOINTS.AUTH.SIGNUP,
+      {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    return response;
+  }
+
+  // Google OAuth authentication
+  getGoogleAuthUrl(): string {
+    return `${this.baseURL}${API_CONFIG.ENDPOINTS.AUTH.GOOGLE_AUTH}`;
+  }
+
+  async handleGoogleCallback(authCode: string): Promise<LoginResponse> {
+    const response = await this.request<LoginResponse>(
+      API_CONFIG.ENDPOINTS.AUTH.GOOGLE_CALLBACK,
+      {
+        method: 'POST',
+        body: JSON.stringify({ code: authCode }),
       }
     );
 
@@ -115,6 +158,20 @@ class ApiService {
     return this.request(API_CONFIG.ENDPOINTS.AUTH.PROFILE, {
       method: 'GET',
       headers: getAuthHeaders(token),
+    });
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return this.request(API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    return this.request(`${API_CONFIG.ENDPOINTS.AUTH.RESET_PASSWORD}/${token}`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
     });
   }
 
@@ -266,6 +323,40 @@ class ApiService {
     });
   }
 
+  // Get delivery estimate - NOW WORKING!
+  async getDeliveryEstimate(token: string, estimateData: {
+    pickup_address?: string;
+    delivery_address?: string;
+    pickup_coordinates?: { lat: number; lng: number };
+    delivery_coordinates?: { lat: number; lng: number };
+    parcel_size: string;
+    weight?: number;
+    distance_km?: number;
+  }): Promise<any> {
+    console.log('=== DELIVERY ESTIMATE API CALL ===');
+    console.log('Request URL:', `${this.baseURL}${API_CONFIG.ENDPOINTS.ORDERS.ESTIMATE}`);
+    console.log('Request Body:', JSON.stringify(estimateData, null, 2));
+    
+    const response = await this.request<any>(API_CONFIG.ENDPOINTS.ORDERS.ESTIMATE, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify(estimateData),
+    });
+    
+    console.log('API Response:', JSON.stringify(response, null, 2));
+    return response;
+  }
+
+  // Create new parcel
+  async createParcel(token: string, parcelData: any): Promise<any> {
+    console.log('Creating parcel:', parcelData);
+    return this.request<any>(API_CONFIG.ENDPOINTS.ORDERS.CREATE, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify(parcelData),
+    });
+  }
+
   // Customer Management Endpoints
   async getCustomers(token: string, filters?: CustomerFilters): Promise<CustomersResponse> {
     console.log('API getCustomers called');
@@ -312,6 +403,14 @@ class ApiService {
       method: 'PUT',
       headers: getAuthHeaders(token),
       body: JSON.stringify({ status }),
+    });
+  }
+
+  // Get nearby riders
+  async getNearbyRiders(latitude: number, longitude: number, radius: number = 10, token?: string): Promise<any> {
+    return this.request<any>(`/api/riders/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
     });
   }
 

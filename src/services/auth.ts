@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import { LoginCredentials, LoginResponse, Admin, ApiError } from '../types/auth';
+import { LoginCredentials, SignupData, LoginResponse, Admin, ApiError } from '../types/auth';
 
 class AuthService {
   private readonly TOKEN_KEY = 'swiftgo_admin_token';
@@ -10,7 +10,7 @@ class AuthService {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const response = await apiService.login(credentials);
-      
+      console.log('Login response received:', response);
       // Store authentication data
       this.storeAuthData(response, credentials.rememberMe || false);
       
@@ -18,6 +18,111 @@ class AuthService {
     } catch (error) {
       throw error as ApiError;
     }
+  }
+
+  // Signup functionality
+  async signup(signupData: SignupData): Promise<LoginResponse> {
+    try {
+      const response = await apiService.signup(signupData);
+      console.log('Signup response received:', response);
+      // Store authentication data immediately after successful signup
+      this.storeAuthData(response, false); // Don't remember signup sessions by default
+      
+      return response;
+    } catch (error) {
+      throw error as ApiError;
+    }
+  }
+
+  // Google OAuth authentication
+  async googleAuth(): Promise<void> {
+    try {
+      // For redirect_uri_mismatch issues, use direct redirect instead of popup
+      const googleAuthUrl = apiService.getGoogleAuthUrl();
+      
+      // Store current location to redirect back after auth
+      sessionStorage.setItem('swiftgo_pre_auth_url', window.location.pathname);
+      
+      // Direct redirect to Google OAuth
+      window.location.href = googleAuthUrl;
+    } catch (error) {
+      throw error as ApiError;
+    }
+  }
+
+  // Handle Google OAuth callback (called after redirect from Google)
+  async handleGoogleAuthCallback(): Promise<LoginResponse | null> {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const userStr = urlParams.get('user');
+      const error = urlParams.get('error');
+      
+      if (error) {
+        throw new Error(`Google authentication failed: ${error}`);
+      }
+      
+      if (token && userStr) {
+        // Backend has already processed the OAuth and returned token + user data
+        const userData = JSON.parse(decodeURIComponent(userStr));
+        console.log('Google OAuth successful - received token and user data:', userData);
+        
+        // Determine user type if not explicitly set
+        let userType = userData.type;
+        if (!userType) {
+          // Check if email contains admin to determine type
+          userType = userData.email?.toLowerCase().includes('admin') ? 'admin' : 'user';
+        }
+        
+        // Ensure user data includes the type
+        const processedUserData = {
+          ...userData,
+          type: userType
+        };
+        
+        console.log('Processed user data with type:', processedUserData);
+        
+        // Create a response object compatible with our LoginResponse interface
+        const response: LoginResponse = {
+          token: token,
+          admin: processedUserData, // Use the processed user data
+          message: 'Google authentication successful'
+        };
+        
+        // Store authentication data
+        this.storeAuthData(response, false);
+        
+        // Clear the URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        return response;
+      }
+      
+      // Fallback: check for authorization code (original implementation)
+      const code = urlParams.get('code');
+      if (code) {
+        const response = await apiService.handleGoogleCallback(code);
+        console.log('Google OAuth successful via code exchange:', response);
+        
+        // Store authentication data
+        this.storeAuthData(response, false);
+        
+        // Clear the URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        return response;
+      }
+      
+      return null;
+    } catch (error) {
+      throw error as ApiError;
+    }
+  }
+
+  // Check if current page is handling Google OAuth callback
+  isGoogleAuthCallback(): boolean {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.has('token') || urlParams.has('code') || urlParams.has('error');
   }
 
   // Logout functionality
@@ -40,12 +145,29 @@ class AuthService {
   private storeAuthData(response: LoginResponse, rememberMe: boolean): void {
     const storage = rememberMe ? localStorage : sessionStorage;
     
+    console.log('AuthService: Storing auth data:', { response, rememberMe });
+    
     storage.setItem(this.TOKEN_KEY, response.token);
-    storage.setItem(this.USER_KEY, JSON.stringify(response.admin));
+    
+    // Handle both admin and user properties for compatibility with different API responses
+    const userData = response.admin || (response as any).user;
+    console.log('AuthService: User data to store:', userData);
+    
+    if (userData) {
+      storage.setItem(this.USER_KEY, JSON.stringify(userData));
+      console.log('AuthService: Stored user data in storage');
+    } else {
+      console.warn('AuthService: No user data found in response');
+    }
+    
+    console.log('AuthService: Auth data stored successfully');
     
     if (rememberMe) {
       localStorage.setItem(this.REMEMBER_KEY, 'true');
     }
+    
+    // Dispatch event to notify components about auth state change
+    window.dispatchEvent(new Event('authStateChanged'));
 
     // Clear the other storage type to avoid conflicts
     const otherStorage = rememberMe ? sessionStorage : localStorage;
@@ -64,6 +186,11 @@ class AuthService {
     localStorage.removeItem(this.REMEMBER_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
+    
+    console.log('AuthService: Cleared all auth data from storage');
+    
+    // Dispatch event to notify components about auth state change
+    window.dispatchEvent(new Event('authStateChanged'));
   }
 
   // Get stored token
@@ -133,11 +260,39 @@ class AuthService {
     }
   }
 
+  // Forgot password functionality
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      const response = await apiService.forgotPassword(email);
+      console.log('Forgot password response received:', response);
+      return response;
+    } catch (error) {
+      throw error as ApiError;
+    }
+  }
+
+  // Reset password functionality
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    try {
+      const response = await apiService.resetPassword(token, password);
+      console.log('Reset password response received:', response);
+      return response;
+    } catch (error) {
+      throw error as ApiError;
+    }
+  }
+
   // Initialize auth state (call on app startup)
   initializeAuth(): { isAuthenticated: boolean; user: Admin | null; token: string | null } {
     const token = this.getToken();
     const user = this.getUser();
     const isAuthenticated = !!(token && user);
+
+    console.log('AuthService: Initializing auth state:', { 
+      token: token ? 'present' : 'missing', 
+      user: user ? { email: user.email, type: user.type } : null, 
+      isAuthenticated 
+    });
 
     return {
       isAuthenticated,

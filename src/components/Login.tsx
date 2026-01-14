@@ -5,6 +5,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Checkbox } from "./ui/checkbox";
 import { Alert, AlertDescription } from "./ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { useAuth } from '../hooks/useAuth';
 import { 
   Eye, 
@@ -40,7 +41,11 @@ export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSignupMode, setIsSignupMode] = useState(false);
-  const { login, loading, error, clearError } = useAuth();
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState('');
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const { login, signup, googleAuth, forgotPassword, loading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,18 +74,37 @@ export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
       if (password !== confirmPassword) {
         return;
       }
+      // Ensure full name has at least 2 characters
+      if (fullName.trim().length < 2) {
+        return;
+      }
+      // Check for valid email format more thoroughly
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return;
+      }
     }
 
     try {
       if (isSignupMode) {
-        // Handle signup logic here - you'll need to implement this in your auth service
-        console.log('Signup attempt:', { email, password, fullName });
-        // For now, just switch to login mode after "successful" signup
-        setIsSignupMode(false);
-        setFullName('');
-        setConfirmPassword('');
+        // Use actual signup function
+        const isAdminSignup = email.toLowerCase().includes('admin');
+        console.log(`Attempting ${isAdminSignup ? 'admin' : 'user'} signup for:`, email);
+        
+        await signup({ 
+          fullName, 
+          email, 
+          password, 
+          type: isAdminSignup ? 'admin' : 'user' 
+        });
+        console.log('Signup successful for:', email);
       } else {
+        // Check if this is an admin or regular user login
+        const isAdminLogin = email.toLowerCase().includes('admin');
+        console.log(`Attempting ${isAdminLogin ? 'admin' : 'user'} login for:`, email);
+        
         await login({ email, password, rememberMe });
+        console.log('Login successful for:', email);
       }
       // Login/Signup successful - the App component will handle the redirect
     } catch (error) {
@@ -91,11 +115,13 @@ export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
 
   const handleGoogleAuth = async () => {
     try {
-      // Implement Google authentication here
       console.log('Google auth initiated');
-      // You'll need to integrate with your Google OAuth setup
+      await googleAuth();
+      console.log('Google authentication successful');
+      // The App component will handle the redirect after auth state change
     } catch (error) {
       console.error('Google auth failed:', error);
+      // Error is handled by the useAuth hook and displayed in the UI
     }
   };
 
@@ -105,6 +131,42 @@ export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
     // Reset form fields when switching modes
     setFullName('');
     setConfirmPassword('');
+    setPassword('');  // Reset password for fresh start
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail || !forgotPasswordEmail.includes('@')) {
+      setForgotPasswordError('Please enter a valid email address');
+      return;
+    }
+
+    setForgotPasswordError('');
+    setForgotPasswordSuccess('');
+
+    try {
+      const response = await forgotPassword(forgotPasswordEmail);
+      setForgotPasswordSuccess(response.message || 'Password reset link sent to your email');
+      setForgotPasswordEmail('');
+    } catch (error) {
+      setForgotPasswordError('Failed to send password reset email. Please try again.');
+    }
+  };
+
+  const openForgotPasswordModal = () => {
+    setShowForgotPasswordModal(true);
+    setForgotPasswordEmail(email); // Pre-fill with current email if available
+    setForgotPasswordError('');
+    setForgotPasswordSuccess('');
+    clearError();
+  };
+
+  const closeForgotPasswordModal = () => {
+    setShowForgotPasswordModal(false);
+    setForgotPasswordEmail('');
+    setForgotPasswordError('');
+    setForgotPasswordSuccess('');
   };
 
   const features = [
@@ -392,7 +454,13 @@ export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
                         Remember me
                       </Label>
                     </div>
-                    <Button variant="link" className="p-0 h-auto text-sm text-primary hover:text-primary/80" disabled={loading}>
+                    <Button 
+                      variant="link" 
+                      type="button"
+                      onClick={openForgotPasswordModal}
+                      className="p-0 h-auto text-sm text-primary hover:text-primary/80" 
+                      disabled={loading}
+                    >
                       Forgot password?
                     </Button>
                   </div>
@@ -457,6 +525,80 @@ export function Login({ isDarkMode, toggleTheme, onBack }: LoginProps) {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <Dialog open={showForgotPasswordModal} onOpenChange={setShowForgotPasswordModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Reset Password</DialogTitle>
+            <DialogDescription className="text-center">
+              Enter your email address and we'll send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            {forgotPasswordError && (
+              <Alert className="border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{forgotPasswordError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {forgotPasswordSuccess && (
+              <Alert className="border-green-500/50 text-green-600 dark:border-green-500 [&>svg]:text-green-600">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{forgotPasswordSuccess}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="forgotEmail" className="text-sm font-medium">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="forgotEmail"
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={forgotPasswordEmail}
+                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                  className="pl-10 h-12 bg-input-background border-border focus:border-primary"
+                  disabled={loading}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !loading) {
+                      handleForgotPassword();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={closeForgotPasswordModal}
+                className="flex-1"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleForgotPassword}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                disabled={loading || !forgotPasswordEmail}
+              >
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Sending...</span>
+                  </div>
+                ) : (
+                  'Send Reset Link'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <div className="absolute bottom-6 left-6 right-6 text-center">

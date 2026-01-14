@@ -1,19 +1,27 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://api.swiftgo.com',
+  BASE_URL: import.meta.env.VITE_API_URL,
+  
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/api/auth/login/admin',
+      USER_LOGIN: '/api/auth/login',
+      SIGNUP: '/api/auth/signup',
+      GOOGLE_AUTH: '/api/auth/google',
+      GOOGLE_CALLBACK: '/api/auth/google/callback',
       LOGOUT: '/api/auth/logout',
       REFRESH: '/api/auth/refresh',
-      PROFILE: '/api/auth/profile'
+      PROFILE: '/api/auth/profile',
+      FORGOT_PASSWORD: '/api/auth/forgot-password',
+      RESET_PASSWORD: '/api/auth/reset-password'
     },
     ORDERS: {
       LIST: '/api/admin/orders',
-      CREATE: '/api/admin/orders',
+      CREATE: '/api/parcels',
       UPDATE: '/api/admin/orders',
       DELETE: '/api/admin/orders',
-      TRACK: '/api/riders/track'
+      TRACK: '/api/riders/track',
+      ESTIMATE: '/api/parcels/estimate'
     },
     RIDERS: {
       LIST: '/api/admin/riders',
