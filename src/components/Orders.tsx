@@ -23,10 +23,12 @@ import {
   Globe,
   Share,
   Download,
-  MessageCircle
+  MessageCircle,
+  Plus
 } from 'lucide-react';
 import { useOrders } from '../hooks/useOrders';
 import { Order } from '../types/auth';
+import { CreateOrder } from './CreateOrder';
 
 export function Orders() {
   const {
@@ -44,6 +46,7 @@ export function Orders() {
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateOrder, setShowCreateOrder] = useState(false);
 
   // Filter orders based on selected tab and search
   const filteredOrders = useMemo(() => {
@@ -153,16 +156,29 @@ export function Orders() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Orders Management</h1>
-          <p className="text-muted-foreground">Track and manage all delivery orders</p>
-        </div>
-        <Button onClick={refreshOrders} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+      {showCreateOrder ? (
+        <CreateOrder onBack={() => setShowCreateOrder(false)} />
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Orders Management</h1>
+              <p className="text-muted-foreground">Track and manage all delivery orders</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                onClick={() => setShowCreateOrder(true)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Order
+              </Button>
+              <Button onClick={refreshOrders} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -523,6 +539,8 @@ export function Orders() {
           )}
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </div>
   );
 }
